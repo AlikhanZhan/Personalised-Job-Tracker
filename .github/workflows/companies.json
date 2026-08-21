@@ -1,0 +1,27 @@
+{
+  "_comment": "One entry per company. 'method' is 'json_api' (the ATS exposes a clean JSON endpoint — best case), 'static' (plain HTML, requests+BeautifulSoup works, selector needed), or 'dynamic' (page needs JavaScript rendering via Playwright, selector needed). 'selector' is only used for static/dynamic methods.",
+
+  "companies": [
+    {
+      "name": "Panmure Liberum",
+      "url": "https://panmure.bamboohr.com/careers/list",
+      "method": "json_api",
+      "role_field": "jobOpeningName",
+      "_note": "Verified working. BambooHR's public JSON API — returns {\"result\": [{\"jobOpeningName\": \"...\"}]}. As of writing they list 2 standing 'Expression of Interest' postings (Entry Level / Experienced) rather than specific named roles — the tracker will flag if a genuinely new role title appears alongside these."
+    },
+    {
+      "name": "Stifel Europe (via Stifel global iCIMS board)",
+      "url": "https://careers-stifel.icims.com/jobs/search?mode=job&iis=Company+Website&in_iframe=1",
+      "method": "static",
+      "selector": ".iCIMS_JobCardItem h3",
+      "_note": "Verified working — plain HTML, no JavaScript needed despite appearing inside an iframe on stifel.com. This board lists ALL Stifel roles globally (US-heavy), not just Europe/London. Consider filtering results in tracker.py for 'London' or 'UK' if you only want European roles — or search this page's keyword search with searchZip/searchLocation params for London specifically."
+    },
+    {
+      "name": "Artemis Investment Management",
+      "url": "https://www.artemisfunds.com/en-gb/individual/about/careers/",
+      "method": "static",
+      "selector": "h2, h3",
+      "_note": "Artemis does NOT run its own jobs board — confirmed on their careers page: 'Candidates for roles are generally sourced through specialist recruiters... We advertise entry level roles through Investment 2020.' There is no per-role listing to scrape here or on Investment 2020's site, since I2020 runs a single annual application cycle for its whole cohort rather than rolling postings. Given that, tracking this page for wording/text CHANGES (rather than new roles appearing) is the best available signal — e.g. if the page text changes from 'applications closed' to something announcing the next intake. The selector above is deliberately broad (all headings) so any content change gets picked up. This will be noisier than the other two companies; treat any notification from this one as 'something changed, go check' rather than 'a new role opened'."
+    }
+  ]
+}
