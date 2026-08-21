@@ -19,7 +19,7 @@
     {
       "name": "Artemis Investment Management",
       "url": "https://www.artemisfunds.com/en-gb/individual/about/careers/",
-      "method": "static",
+      "method": "dynamic",,
       "selector": "h2, h3",
       "_note": "Artemis does NOT run its own jobs board — confirmed on their careers page: 'Candidates for roles are generally sourced through specialist recruiters... We advertise entry level roles through Investment 2020.' There is no per-role listing to scrape here or on Investment 2020's site, since I2020 runs a single annual application cycle for its whole cohort rather than rolling postings. Given that, tracking this page for wording/text CHANGES (rather than new roles appearing) is the best available signal — e.g. if the page text changes from 'applications closed' to something announcing the next intake. The selector above is deliberately broad (all headings) so any content change gets picked up. This will be noisier than the other two companies; treat any notification from this one as 'something changed, go check' rather than 'a new role opened'."
     }
