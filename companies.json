@@ -7,21 +7,50 @@
       "url": "https://panmure.bamboohr.com/careers/list",
       "method": "json_api",
       "role_field": "jobOpeningName",
-      "_note": "Verified working. BambooHR's public JSON API."
+      "_note": "Verified working. BambooHR's public JSON API — returns {\"result\": [{\"jobOpeningName\": \"...\"}]}. As of writing they list 2 standing 'Expression of Interest' postings (Entry Level / Experienced) rather than specific named roles — the tracker will flag if a genuinely new role title appears alongside these."
     },
     {
       "name": "Stifel Europe (via Stifel global iCIMS board)",
       "url": "https://careers-stifel.icims.com/jobs/search?mode=job&iis=Company+Website&in_iframe=1",
-      "method": "dynamic",
+      "method": "static",
       "selector": ".iCIMS_JobCardItem h3",
-      "_note": "Switched to dynamic (Playwright) after iCIMS started blocking plain HTTP requests with a 405 error."
+      "_note": "Verified working — plain HTML, no JavaScript needed despite appearing inside an iframe on stifel.com. This board lists ALL Stifel roles globally (US-heavy), not just Europe/London. Consider filtering results in tracker.py for 'London' or 'UK' if you only want European roles — or search this page's keyword search with searchZip/searchLocation params for London specifically."
     },
     {
       "name": "Artemis Investment Management",
       "url": "https://www.artemisfunds.com/en-gb/individual/about/careers/",
       "method": "static",
       "selector": "h2, h3",
-      "_note": "Artemis doesn't run its own jobs board — this tracks the careers page for any text change as a proxy signal, since roles go through Investment 2020's annual cycle rather than rolling postings."
+      "_note": "Artemis does NOT run its own jobs board — confirmed on their careers page: 'Candidates for roles are generally sourced through specialist recruiters... We advertise entry level roles through Investment 2020.' There is no per-role listing to scrape here or on Investment 2020's site, since I2020 runs a single annual application cycle for its whole cohort rather than rolling postings. Given that, tracking this page for wording/text CHANGES (rather than new roles appearing) is the best available signal — e.g. if the page text changes from 'applications closed' to something announcing the next intake. The selector above is deliberately broad (all headings) so any content change gets picked up. This will be noisier than the other two companies; treat any notification from this one as 'something changed, go check' rather than 'a new role opened'."
+    },
+    {
+      "name": "Glencore UK",
+      "url": "https://boards-api.greenhouse.io/v1/boards/glencoreuk/jobs",
+      "method": "json_api",
+      "role_field": "title",
+      "_note": "Verified working. Greenhouse's public JSON API — returns {\"jobs\": [{\"title\": \"...\"}]}. As of writing shows 2 live UK graduate roles (Analytics, Commercial), both closing 9 Oct 2026."
+    },
+    {
+      "name": "Evercore (UK)",
+      "url": "https://api.smartrecruiters.com/v1/companies/Wiser/postings",
+      "method": "json_api",
+      "role_field": "name",
+      "_note": "Verified working. SmartRecruiters' public JSON API (company identifier 'Wiser' is Evercore's internal SmartRecruiters tenant name) — returns {\"content\": [{\"name\": \"...\"}]}. As of writing shows 7 live London roles for the 2026/27 season including M&A Advisory Analyst and Private Funds Group roles. This endpoint returns ALL Evercore postings company-wide; consider filtering for London/UK in tracker.py if global noise becomes an issue, though currently all results are London-based."
+    },
+    {
+      "name": "Quilter Cheviot",
+      "url": "https://careers.quilter.com/early-careers/",
+      "method": "static",
+      "selector": ".intro__card h3",
+      "_note": "This page lists fixed PROGRAMME TYPES (e.g. 'One-year programme', 'Two-year opportunities', '8-week AI graduate internship') rather than individual rolling job postings — it's a static marketing page, not a live job board. The tracker will flag if a new programme type is added. Their actual live vacancies sit on a Workday board (quilter.wd3.myworkdayjobs.com) but that requires a POST-based API call rather than a simple scrape — could be upgraded to 'workday' method later if needed, matching the Jupiter entry below."
+    },
+    {
+      "name": "Jupiter Asset Management",
+      "url": "https://jupiteram.wd3.myworkdayjobs.com/wday/cxs/jupiteram/jupiter_careers/jobs",
+      "method": "workday",
+      "tenant": "jupiteram",
+      "site": "jupiter_careers",
+      "_note": "Verified the Workday tenant/site identifiers are correct (jupiteram / jupiter_careers). Runs Investment 20/20 traineeships/apprenticeships (2-year, rotational, various departments) — roles appear on this Workday board on a rolling basis. Uses the new 'workday' method in tracker.py, which POSTs to Workday's internal jobs API rather than scraping HTML."
     }
   ]
 }
