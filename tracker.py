@@ -66,20 +66,43 @@ def scrape_dynamic(url: str, selector: str) -> list[str]:
 
 
 def scrape_json_api(url: str, role_field: str) -> list[str]:
-    """For ATS platforms (like BambooHR) that expose a clean JSON endpoint.
-    This is far more reliable than HTML scraping — no selectors to break."""
+    """For ATS platforms (like BambooHR or Greenhouse) that expose a clean,
+    GET-able JSON endpoint. This is far more reliable than HTML scraping."""
     resp = requests.get(url, headers=HEADERS, timeout=20)
     resp.raise_for_status()
     data = resp.json()
-    # BambooHR wraps the list in {"result": [...]}. Other ATSs vary —
-    # adjust this line if you add a company with a different JSON shape.
-    items = data.get("result", data if isinstance(data, list) else [])
+    # BambooHR wraps the list in {"result": [...]}, Greenhouse in {"jobs": [...]}.
+    # Try both common shapes.
+    if isinstance(data, dict):
+        items = data.get("result") or data.get("jobs") or data.get("content") or []
+    else:
+        items = data
     return [item.get(role_field, "").strip() for item in items if item.get(role_field)]
+
+
+def scrape_workday(url: str, tenant: str, site: str) -> list[str]:
+    """For Workday-hosted career sites (e.g. *.wd3.myworkdayjobs.com).
+    Workday's job list loads via a POST to an internal 'cxs' API rather
+    than being present in the page HTML, so this calls that API directly
+    instead of needing a full headless browser."""
+    api_url = f"https://{tenant}.wd3.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs"
+    resp = requests.post(
+        api_url,
+        headers={**HEADERS, "Content-Type": "application/json"},
+        json={"appliedFacets": {}, "limit": 20, "offset": 0, "searchText": ""},
+        timeout=20,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    postings = data.get("jobPostings", [])
+    return [p.get("title", "").strip() for p in postings if p.get("title")]
 
 
 def scrape_company(company: dict) -> list[str]:
     if company["method"] == "json_api":
         return scrape_json_api(company["url"], company["role_field"])
+    if company["method"] == "workday":
+        return scrape_workday(company["url"], company["tenant"], company["site"])
     if company["method"] == "dynamic":
         return scrape_dynamic(company["url"], company["selector"])
     return scrape_static(company["url"], company["selector"])
@@ -135,6 +158,8 @@ def main():
         previous_roles = load_previous_state(slug)
 
         if previous_roles is None:
+            # First run for this company — just establish a baseline, don't
+            # flag every existing role as "new" or you'll get spammed.
             print(f"  First run for {name} — saving baseline of {len(current_roles)} roles.")
         else:
             new_roles = [r for r in current_roles if r not in previous_roles]
@@ -162,7 +187,10 @@ def main():
         print("\nErrors encountered:")
         for e in errors:
             print(f"  - {e}")
+        # Don't hard-fail the whole run just because one site broke —
+        # the others may have still updated fine.
 
 
 if __name__ == "__main__":
     main()
+
